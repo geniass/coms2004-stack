@@ -43,6 +43,7 @@ private:
   Node* tail;
 
   void init();
+  void copy(const stack& st);
 
 };
 
@@ -61,41 +62,53 @@ stack<T>::~stack()
 }
 
 template <class T>
-stack<T>::stack(const stack& st)
+void stack<T>::copy(const stack& st)
 {
-    init();
-
-    stack s1 = st;
-    stack s2;
-    while (!s1.empty()) {
-        s2.push(s1.top());
-        s1.pop();
+    stack<T> s1;
+    Node* n = st.head->next;
+    while (n != st.tail) {
+        s1.push(n->value);
+        n = n->next;
     }
 
-    while (!s2.empty()) {
-        push(s2.top());
-        s2.pop();
+    while (!s1.empty()) {
+        push(s1.top());
+        s1.pop();
     }
 }
 
+// copy constructor
+template <class T>
+stack<T>::stack(const stack& st)
+{
+    init();
+    copy(st);
+}
+
+// copy assignment
 template <class T>
 stack<T>& stack<T>::operator= (const stack& st)
 {
     clear();
-    return stack(st);
+    copy(st);
+    return *this;
 }
 
+// move constructor
 template <class T>
 stack<T>::stack(stack&& st)
 {
-    *this = st;
+    head = st.head;
+    st.head = nullptr;
 }
 
+// move assignment
 template <class T>
 stack<T>& stack<T>::operator= (stack&& st)
 {
     clear();
-    return stack(st);
+    head = st.head;
+    st.head = nullptr;
 }
 
 template <class T>
