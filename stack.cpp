@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdexcept>
+
 template <typename T>
 class stack {
 
@@ -117,8 +119,7 @@ const T& stack<T>::top() const
     if (head->next != tail) {
         return head->next->value;
     } else {
-        std::cout <<"problem" << std::endl;
-        return head->next->value;    // TODO: use exceptions
+        throw std::out_of_range("Called top() on empty stack");
     }
 }
 
@@ -132,9 +133,7 @@ void stack<T>::pop()
 
         delete n;
     } else {
-
-        std::cout <<" cant pop problem" << std::endl;
-        //TODO: exceptions
+        throw std::out_of_range("Called pop() on empty stack");
     }
 }
 
