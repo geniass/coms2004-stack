@@ -22,14 +22,18 @@ public:
     virtual const char* what() const throw()
     {
         string info = "Balancing error: ";
-        
+
         if (opening.empty()) {
             info += "No matching opening symbol found for ";
             info += closing;
+        } else if (closing.empty()) {
+            info += "No matching closing symbol found for ";
+            info += opening;
         } else {
-        info += opening + " or ";
-        info += closing + " does not match";
+            info += opening + " or ";
+            info += closing + " does not match";
         }
+
         info += " (line ";
         if (line_num > 0) {
             info += to_string(line_num);
@@ -94,7 +98,7 @@ void check_line(string line, stack<string>& symbol_stack)
                 symbol_stack.pop();
                 continue;
             }
-        } catch (out_of_range& oor) {
+        } catch (const out_of_range& oor) {
             // the stack is empty but a closing symbol was found
             throw balance_exception("", sym);
         }
@@ -133,6 +137,6 @@ int main()
     try{
         check_balancing(file_name);
     }catch (const balance_exception& be) {
-        cout << be.what() << endl;
+        cerr << be.what() << endl;
     }
 }
