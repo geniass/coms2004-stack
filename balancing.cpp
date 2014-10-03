@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <sstream>
 #include "stack.cpp"
 
 using namespace std;
@@ -21,28 +22,28 @@ public:
 
     virtual const char* what() const throw()
     {
-        string info = "Balancing error: ";
+        ostringstream ss {"Balancing error: "};
 
         if (opening.empty()) {
-            info += "No matching opening symbol found for ";
-            info += closing;
+            ss << "No matching opening symbol found for ";
+            ss << closing;
         } else if (closing.empty()) {
-            info += "No matching closing symbol found for ";
-            info += opening;
+            ss << "No matching closing symbol found for ";
+            ss << opening;
         } else {
-            info += opening + " or ";
-            info += closing + " does not match";
+            ss << opening << " or ";
+            ss << closing << " does not match";
         }
 
-        info += " (line ";
+        ss << " (line ";
         if (line_num > 0) {
-            info += to_string(line_num);
+            ss << line_num;
         } else {
-            info += "unknown";
+            ss << "unknown";
         }
-        info += ")";
+        ss << ")";
 
-        return info.c_str();
+        return ss.str().c_str();
     }
 
     string opening, closing;
@@ -115,16 +116,15 @@ void check_balancing(string file_name)
     while (infile >> line) {
         try {
             check_line(line, symbol_stack);
+            ++line_num;
         } catch (const balance_exception& be) {
             throw balance_exception(be.opening, be.closing, line_num);
         }
-
-        ++line_num;
     }
 
     if (!symbol_stack.empty()) {
         // not all opening symbols were closed
-        throw balance_exception(symbol_stack.top(), "", line_num);
+        throw balance_exception(symbol_stack.top(), "", --line_num);
     }
 }
 
@@ -136,6 +136,7 @@ int main()
 
     try{
         check_balancing(file_name);
+        cout << file_name << ": all symbols balance" << endl;
     }catch (const balance_exception& be) {
         cerr << be.what() << endl;
     }
