@@ -9,9 +9,7 @@
 
 using namespace std;
 
-const map<string, string> SYMBOLS = {{"{","}"}, {"[","]"}, {"(",")"}, {"/*","*/"}};
-const vector<string> OPENING_SYMBOLS = {"{", "[", "(", "/*"};
-const vector<string> CLOSING_SYMBOLS = {"}", "]", ")", "*/"};
+const map<string, string> SYMBOLS = {{"{","}"}, {"[","]"}, {"(",")"}, {"/*","*/"}, {"\"", "\""}, {"'", "'"}};
 
 class balance_exception : exception
 {
@@ -78,30 +76,68 @@ void check_line(string line, stack<string>& symbol_stack)
     // yes: pop and continue
     // no: throw error
     
-    for (char c : line) {
+    for (auto it = line.begin(); it != line.end(); it++) {
+        //TODO: push "
         //TODO: more logic to ignore literals etc
         //TODO: need to deal with /* and */
-        string sym{c};
+        string sym{*it};    // current character
 
-        if (sym == "/") {
-            // (/*) This one is tricky - 2 chars
-        }
+        if (symbol_stack.empty() || (symbol_stack.top() != "\"" && symbol_stack.top() != "'")) {
+            // we're not in a literal
+            if (sym == "/" && string{*(it+1)} == "*") {
+                symbol_stack.push("/*");
+                ++it;
+                continue;
+            }
 
-        if (SYMBOLS.count(sym) > 0) {
-            // sym is an opening symbol
-            symbol_stack.push(sym);
-            continue;
-        }
+            if (sym == "*" && string{*(it+1)} == "/") {
+                try {
+                    if (symbol_matches(symbol_stack.top(), "*/")) {
+                        // sym is the matching closing symbol
+                        symbol_stack.pop();
+                        ++it;
+                        continue;
+                    }
+                } catch (const out_of_range& oor) {
+                    // the stack is empty but a closing symbol was found
+                    throw balance_exception("", "*/");
+                }
+            }
 
-        try {
-            if (symbol_matches(symbol_stack.top(), sym)) {
+            if (!symbol_stack.empty() && symbol_stack.top() == "/*") {
+                // ignore everything else in comments
+                continue;
+            }
+
+            if (SYMBOLS.count(sym) > 0) {
+                // sym is an opening symbol
+                symbol_stack.push(sym);
+                continue;
+            }
+
+            if (!symbol_stack.empty()) {
+                if (symbol_matches(symbol_stack.top(), sym)) {
+                    // sym is the matching closing symbol
+                    symbol_stack.pop();
+                    continue;
+                }
+            }
+        } else if (symbol_stack.top() == "\"") {
+            // we're inside a string literal
+            // ignore everything except "
+            if (sym == "\"") {
                 // sym is the matching closing symbol
                 symbol_stack.pop();
                 continue;
             }
-        } catch (const out_of_range& oor) {
-            // the stack is empty but a closing symbol was found
-            throw balance_exception("", sym);
+        } else {
+            cout << "else" << sym << endl;
+            // we're inside a char literal
+            // ignore everthing except '
+            if (sym == "'") {
+                symbol_stack.pop();
+                continue;
+            }
         }
     }
 }
